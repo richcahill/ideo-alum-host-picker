@@ -33,7 +33,7 @@ async function UnlockForm({
     return (
       <p role="alert" className="mt-8 text-muted">
         No passcode has been set for this site yet, so nothing can be changed.
-        Set <code className="font-mono text-sm">PICKER_PASSCODE</code> in the
+        Set <code className="font-mono text-sm">EDIT_PASSWORD</code> in the
         project&apos;s environment variables.
       </p>
     );

@@ -11,7 +11,7 @@ npm install
 ```
 
 ```bash
-PICKER_PASSCODE=test npm run dev
+EDIT_PASSWORD=test npm run dev
 ```
 
 With no Upstash store connected, the list is kept in memory and is gone when the server stops.
@@ -20,7 +20,7 @@ With no Upstash store connected, the list is kept in memory and is gone when the
 
 On Vercel, the project needs two things:
 
-- `PICKER_PASSCODE`: the shared passcode. Anyone can view; the passcode is needed to pick or change anything. Without it set, nothing can be changed. Changing it signs everyone out.
+- `EDIT_PASSWORD`: the shared passcode. Anyone can view; the passcode is needed to pick or change anything. Without it set, nothing can be changed. Changing it signs everyone out.
 - An Upstash Redis store connected to the project (`KV_REST_API_URL` and `KV_REST_API_TOKEN`, or the `UPSTASH_REDIS_REST_*` pair). Everything lives in one JSON value under `picker:state`.
 
 ## How picking works
