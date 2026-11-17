@@ -29,4 +29,10 @@ Both only reach a deployment made after they were added, so redeploy after chang
 
 The draw is weighted (`src/lib/picker.ts`): a person's weight is the number of meetups since they last organized, and someone who never has counts as longer ago than anyone. Whoever organized the most recent meetup sits the next one out, and picking again never repeats the current pick.
 
+The server makes the draw; the wheel, whose slices are as wide as each person's share, then spins round to the answer and throws confetti.
+
 The pick stays on the page until the meetup is added to the history with its date, location and notes. Past meetups can be added, edited and deleted by hand.
+
+## Analytics
+
+Vercel Web Analytics is wired in (`<Analytics />` in `src/app/layout.tsx`), with one custom event, `wheel_spun`, which carries no names. It records only once Analytics is enabled for the project in the Vercel dashboard, and it uses no cookies.

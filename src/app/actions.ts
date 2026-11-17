@@ -32,13 +32,16 @@ export async function lock() {
 
 // Every change goes through here: the passcode is checked on the server, so
 // hiding the controls is never what keeps the list safe.
-async function change(update: (state: State) => State | null) {
+async function change(
+  update: (state: State) => State | null,
+  refreshes = true,
+) {
   if (!(await unlocked())) redirect("/unlock");
   const store = getStore();
   if (!store) return;
   const next = update(await store.read());
   if (next) await store.write(next);
-  refresh();
+  if (refreshes) refresh();
 }
 
 const text = (formData: FormData, name: string, max: number) =>
@@ -69,14 +72,20 @@ export async function removePerson(formData: FormData) {
   });
 }
 
-/** Draws the next organizer; picking again never repeats the current pick. */
-export async function pick() {
+/**
+ * Draws the next organizer and returns their name; drawing again never
+ * repeats the current pick. The page isn't refreshed here: the wheel spins to
+ * the name first and refreshes once it has landed.
+ */
+export async function pick(): Promise<string | null> {
+  let name: string | null = null;
   await change((state) => {
     const person = draw(standings(state, state.next?.name), randomInt);
-    return person
-      ? { ...state, next: { name: person.name, at: new Date().toISOString() } }
-      : null;
-  });
+    if (!person) return null;
+    name = person.name;
+    return { ...state, next: { name, at: new Date().toISOString() } };
+  }, false);
+  return name;
 }
 
 export async function clearPick() {

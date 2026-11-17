@@ -1,6 +1,6 @@
 import "server-only";
 import { Redis } from "@upstash/redis";
-import { EMPTY, type State } from "@/lib/picker";
+import { EMPTY, SEED, type State } from "@/lib/picker";
 
 /** Where the list, the history and the current pick live: one JSON value. */
 export interface Store {
@@ -14,7 +14,7 @@ function upstash(redis: Redis): Store {
   return {
     async read() {
       const found = await redis.get<State | string>(KEY);
-      if (!found) return EMPTY;
+      if (!found) return SEED;
       const state = typeof found === "string" ? JSON.parse(found) : found;
       return { ...EMPTY, ...(state as State) };
     },
@@ -27,7 +27,7 @@ function upstash(redis: Redis): Store {
 // For running on a laptop with no Upstash: kept in memory, and gone when the
 // server stops.
 function memory(): Store {
-  let state = EMPTY;
+  let state = SEED;
   return {
     async read() {
       return state;

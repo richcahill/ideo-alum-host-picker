@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </header>
           <main className="flex-1 pb-24">{children}</main>
         </div>
+        <Analytics />
       </body>
     </html>
   );

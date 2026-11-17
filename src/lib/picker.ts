@@ -19,6 +19,36 @@ export type State = {
 
 export const EMPTY: State = { people: [], meetups: [], next: null };
 
+// Who is in the hat before anyone has changed anything. Once the list has
+// been saved, the saved one is used and this is never read again.
+const FIRST_NAMES = [
+  "Aaron",
+  "Bex",
+  "Bobbie",
+  "Dave",
+  "Ger",
+  "Ivo",
+  "Jack",
+  "Kathir",
+  "Konstantinos",
+  "Luca",
+  "Lydia",
+  "Marta",
+  "Masi",
+  "Mathilde",
+  "Milly",
+  "Nelson",
+  "Rich",
+  "Stina",
+  "Suneil",
+  "Will",
+];
+
+export const SEED: State = {
+  ...EMPTY,
+  people: FIRST_NAMES.map((name) => ({ id: name.toLowerCase(), name })),
+};
+
 export const same = (a: string, b: string) =>
   a.trim().toLowerCase() === b.trim().toLowerCase();
 

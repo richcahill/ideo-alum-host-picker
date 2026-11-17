@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { Submit, TextSubmit } from "@/components/submit";
+import { Wheel } from "@/components/wheel";
 import {
   EMPTY,
   newestFirst,
@@ -16,7 +17,6 @@ import {
   clearPick,
   deleteMeetup,
   lock,
-  pick,
   removePerson,
   saveMeetup,
 } from "./actions";
@@ -76,30 +76,18 @@ async function Picker() {
   return (
     <>
       <section className={`${card} p-1.5`}>
-        <div className="rounded-well bg-well px-6 py-12 text-center">
+        <div className="overflow-hidden rounded-well bg-well px-6 py-12 text-center">
           <p className={label}>Organizing the next meetup</p>
-          {state.next ? (
-            <h1
-              key={state.next.at}
-              className="reveal mt-4 text-4xl font-medium tracking-tight sm:text-5xl"
-            >
-              {state.next.name}
-            </h1>
-          ) : (
-            <h1 className="mt-4 text-4xl font-medium tracking-tight text-muted sm:text-5xl">
-              Nobody yet
-            </h1>
-          )}
-          {editing && state.people.length > 0 && (
-            <form action={pick} className="mt-8">
-              <Submit variant="tactile">
-                {state.next ? "Pick again" : "Pick someone"}
-              </Submit>
-            </form>
-          )}
+          <Wheel
+            segments={rows
+              .filter((row) => row.weight > 0)
+              .map((row) => ({ name: row.person.name, weight: row.weight }))}
+            current={state.next?.name ?? null}
+            editing={editing}
+          />
           {editing && state.people.length === 0 && (
             <p className="mt-6 text-muted">
-              Add some people below, then pick.
+              Add some people below, then spin.
             </p>
           )}
           {!editing && (
@@ -110,7 +98,7 @@ async function Picker() {
               >
                 Enter the passcode
               </Link>{" "}
-              to pick or change anything.
+              to spin or change anything.
             </p>
           )}
         </div>
@@ -144,7 +132,8 @@ async function Picker() {
         <h2 className="text-xl font-medium tracking-tight">In the hat</h2>
         <p className="mt-2 text-muted">
           The longer since someone last organized, the likelier they are to be
-          picked. Whoever organized last sits the next one out.
+          picked, and the wider their slice of the wheel. Whoever organized last
+          sits the next one out.
         </p>
         {rows.length > 0 && (
           <ul className={`${card} mt-6 divide-y divide-rule`}>
