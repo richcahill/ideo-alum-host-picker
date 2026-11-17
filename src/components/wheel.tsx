@@ -35,11 +35,17 @@ export function Wheel({
   segments,
   current,
   editing,
+  place,
+  spins,
 }: {
   segments: Segment[];
   /** Whoever is picked at the moment, as the server has it. */
   current: string | null;
   editing: boolean;
+  /** The location this wheel draws for. */
+  place: string;
+  /** How many times the wheel has been spun, everywhere. */
+  spins: number;
 }) {
   const router = useRouter();
   const wheel = useRef<SVGSVGElement>(null);
@@ -76,7 +82,7 @@ export function Wheel({
     track("wheel_spun");
     let name: string | null = null;
     try {
-      name = await pick();
+      name = await pick(place);
     } catch {
       // Falls through: without a name there is nothing to spin to.
     }
@@ -88,9 +94,7 @@ export function Wheel({
     }
     const at = within(slice.from, slice.to);
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setRotation(
-      (r) => r + TURNS * 360 + ((((-at - r) % 360) + 360) % 360),
-    );
+    setRotation((r) => r + TURNS * 360 + ((((-at - r) % 360) + 360) % 360));
     setTimeout(
       () => {
         setLanded(name);
@@ -193,6 +197,12 @@ export function Wheel({
             {current || landed ? "Spin again" : "Spin the wheel"}
           </Button>
         </div>
+      )}
+      {slices.length > 0 && (
+        <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.05em] text-muted">
+          <span className="tabular-nums">{spins.toLocaleString("en-GB")}</span>{" "}
+          spins so far
+        </p>
       )}
     </>
   );

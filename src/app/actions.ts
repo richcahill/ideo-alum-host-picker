@@ -5,7 +5,16 @@ import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { COOKIE, matches, passcode, token } from "@/lib/passcode";
-import { draw, same, standings, type Meetup, type State } from "@/lib/picker";
+import {
+  draw,
+  HOME,
+  href,
+  same,
+  slugify,
+  standings,
+  type Meetup,
+  type State,
+} from "@/lib/picker";
 import { unlocked } from "@/lib/session";
 import { getStore } from "@/lib/store";
 
@@ -33,16 +42,22 @@ export async function lock() {
 // Every change goes through here: the passcode is checked on the server, so
 // hiding the controls is never what keeps the list safe.
 async function change(
+  slug: string,
   update: (state: State) => State | null,
   refreshes = true,
 ) {
   if (!(await unlocked())) redirect("/unlock");
   const store = getStore();
   if (!store) return;
-  const next = update(await store.read());
-  if (next) await store.write(next);
+  // Only a location that exists can be written to.
+  if (!(await store.places()).some((place) => place.slug === slug)) return;
+  const next = update(await store.read(slug));
+  if (next) await store.write(slug, next);
   if (refreshes) refresh();
 }
+
+/** Which location a form was sent from. */
+const from = (formData: FormData) => text(formData, "place", 40);
 
 const text = (formData: FormData, name: string, max: number) =>
   String(formData.get(name) ?? "")
@@ -52,7 +67,7 @@ const text = (formData: FormData, name: string, max: number) =>
 export async function addPerson(formData: FormData) {
   const name = text(formData, "name", 80);
   if (!name) return;
-  await change((state) =>
+  await change(from(formData), (state) =>
     state.people.some((person) => same(person.name, name))
       ? null
       : { ...state, people: [...state.people, { id: randomUUID(), name }] },
@@ -61,7 +76,7 @@ export async function addPerson(formData: FormData) {
 
 export async function removePerson(formData: FormData) {
   const id = text(formData, "id", 64);
-  await change((state) => {
+  await change(from(formData), (state) => {
     const gone = state.people.find((person) => person.id === id);
     if (!gone) return null;
     return {
@@ -77,19 +92,24 @@ export async function removePerson(formData: FormData) {
  * repeats the current pick. The page isn't refreshed here: the wheel spins to
  * the name first and refreshes once it has landed.
  */
-export async function pick(): Promise<string | null> {
+export async function pick(slug: string): Promise<string | null> {
   let name: string | null = null;
-  await change((state) => {
-    const person = draw(standings(state, state.next?.name), randomInt);
-    if (!person) return null;
-    name = person.name;
-    return { ...state, next: { name, at: new Date().toISOString() } };
-  }, false);
+  await change(
+    String(slug),
+    (state) => {
+      const person = draw(standings(state, state.next?.name), randomInt);
+      if (!person) return null;
+      name = person.name;
+      return { ...state, next: { name, at: new Date().toISOString() } };
+    },
+    false,
+  );
+  if (name) await getStore()?.countSpin();
   return name;
 }
 
-export async function clearPick() {
-  await change((state) => ({ ...state, next: null }));
+export async function clearPick(formData: FormData) {
+  await change(from(formData), (state) => ({ ...state, next: null }));
 }
 
 /**
@@ -108,7 +128,7 @@ export async function saveMeetup(formData: FormData) {
     location: text(formData, "location", 120) || undefined,
     notes: text(formData, "notes", 500) || undefined,
   };
-  await change((state) => ({
+  await change(from(formData), (state) => ({
     ...state,
     meetups: id
       ? state.meetups.map((m) => (m.id === id ? meetup : m))
@@ -119,8 +139,42 @@ export async function saveMeetup(formData: FormData) {
 
 export async function deleteMeetup(formData: FormData) {
   const id = text(formData, "id", 64);
-  await change((state) => ({
+  await change(from(formData), (state) => ({
     ...state,
     meetups: state.meetups.filter((m) => m.id !== id),
   }));
+}
+
+/** Adds a location with an empty list of its own, and goes to it. */
+export async function addPlace(formData: FormData) {
+  if (!(await unlocked())) redirect("/unlock");
+  const name = text(formData, "name", 40);
+  const slug = slugify(name);
+  const store = getStore();
+  if (!slug || !store) return;
+  const places = await store.places();
+  const existing = places.find((place) => place.slug === slug);
+  if (!existing) {
+    await store.savePlaces([...places.slice(1), { slug, name }]);
+  }
+  redirect(href(existing ?? { slug, name }));
+}
+
+/**
+ * Removes a location someone added. One with meetups in its history stays,
+ * so a slip can't throw a record away; London always stays.
+ */
+export async function removePlace(formData: FormData) {
+  if (!(await unlocked())) redirect("/unlock");
+  const slug = from(formData);
+  const store = getStore();
+  if (!store || slug === HOME.slug) return;
+  const places = await store.places();
+  if (!places.some((place) => place.slug === slug)) return;
+  if ((await store.read(slug)).meetups.length > 0) return;
+  await store.savePlaces(
+    places.slice(1).filter((place) => place.slug !== slug),
+  );
+  await store.remove(slug);
+  redirect("/");
 }

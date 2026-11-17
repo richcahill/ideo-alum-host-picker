@@ -17,9 +17,33 @@ export type State = {
   next: { name: string; at: string } | null;
 };
 
+/** A city with its own people, pick and history. */
+export type Place = { slug: string; name: string };
+
+/** Where it started. Always there, and it lives at the site's root. */
+export const HOME: Place = { slug: "london", name: "London" };
+
+/** Paths the site uses itself, which a location can't take. */
+const RESERVED = new Set([HOME.slug, "unlock", "api", "_next", "_vercel"]);
+
+/** A location's name as it appears in its address, or null if it can't be one. */
+export function slugify(name: string) {
+  const slug = name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+  return slug && !RESERVED.has(slug) ? slug : null;
+}
+
+export const href = (place: Place) =>
+  place.slug === HOME.slug ? "/" : `/${place.slug}`;
+
 export const EMPTY: State = { people: [], meetups: [], next: null };
 
-// Who is in the hat before anyone has changed anything. Once the list has
+// Who is in London's hat before anyone has changed anything. Once the list has
 // been saved, the saved one is used and this is never read again.
 const FIRST_NAMES = [
   "Aaron",
