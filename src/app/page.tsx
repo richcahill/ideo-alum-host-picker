@@ -68,7 +68,7 @@ async function Picker() {
     );
   }
 
-  const rows = standings(state, state.next?.name);
+  const rows = standings(state);
   const total = rows.reduce((sum, row) => sum + row.weight, 0);
   const history = newestFirst(state.meetups);
   const names = state.people.map((person) => person.name);
@@ -222,7 +222,8 @@ async function Picker() {
                   <p className="mt-1 text-sm text-muted">{meetup.notes}</p>
                 )}
                 {editing && (
-                  <details className="mt-2">
+                  // Keyed by its contents, so a saved edit folds the form away.
+                  <details key={JSON.stringify(meetup)} className="mt-2">
                     <summary className="cursor-pointer list-none text-sm text-muted underline decoration-rule underline-offset-4 hover:text-foreground [&::-webkit-details-marker]:hidden">
                       Edit
                     </summary>
@@ -238,7 +239,7 @@ async function Picker() {
           </ol>
         )}
         {editing && (
-          <details className="mt-4">
+          <details key={history.length} className="mt-4">
             <summary className="cursor-pointer list-none text-sm text-muted underline decoration-rule underline-offset-4 hover:text-foreground [&::-webkit-details-marker]:hidden">
               Add a past meetup
             </summary>
