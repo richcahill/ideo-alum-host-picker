@@ -57,6 +57,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <ThemeToggle className="font-mono text-[11px] tracking-[0.05em] text-muted" />
           </header>
           <main className="flex-1 pb-24">{children}</main>
+          <footer className="border-t border-rule py-8 text-sm text-muted">
+            Made by Rich, who is also selling almost everything he owns at{" "}
+            <a
+              href="https://shop.richmak.es"
+              target="_blank"
+              rel="noreferrer"
+              className="text-foreground underline decoration-rule underline-offset-4 hover:decoration-current"
+            >
+              shop.richmak.es ↗
+            </a>
+          </footer>
         </div>
         <Analytics />
       </body>
