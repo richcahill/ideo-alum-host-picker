@@ -23,6 +23,8 @@ On Vercel, the project needs two things:
 - `EDIT_PASSWORD`: the shared passcode. Anyone can view; the passcode is needed to pick or change anything. Without it set, nothing can be changed. Changing it signs everyone out.
 - An Upstash Redis store connected to the project (`KV_REST_API_URL` and `KV_REST_API_TOKEN`, or the `UPSTASH_REDIS_REST_*` pair). Everything lives in one JSON value under `picker:state`.
 
+Both only reach a deployment made after they were added, so redeploy after changing either.
+
 ## How picking works
 
 The draw is weighted (`src/lib/picker.ts`): a person's weight is the number of meetups since they last organized, and someone who never has counts as longer ago than anyone. Whoever organized the most recent meetup sits the next one out, and picking again never repeats the current pick.
